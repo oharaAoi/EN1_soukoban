@@ -7,14 +7,23 @@ public class NewBehaviourScript : MonoBehaviour {
 	// 配列の宣言
 	int[,] map;
 
+	// GemeObjectの追加
+	public GameObject playerPrefab;
 
 
 	// Start is called before the first frame update
 	void Start() {
+
+		//GameObject instance = Instantiate(
+		//	playerPrefab,			 // object
+		//	new Vector3(0, 0, 0),	 // pos
+		//	Quaternion.identity		 // rotate
+		//);
+
 		// 配列の実体と作成を初期化
 		map = new int[,] {
+			{1,0,0,0,0},
 			{0,0,0,0,0},
-			{0,0,1,0,0},
 			{0,0,0,0,0}
 		};
 
@@ -23,6 +32,15 @@ public class NewBehaviourScript : MonoBehaviour {
 		for(int row = 0; row < map.GetLength(0); row++) {
 			for(int col = 0; col < map.GetLength(1); col++) {
 				debugText += map[row, col].ToString() + ",";
+
+				// mapの1(Player)を確認
+				if (map[row, col] == 1) {
+					GameObject instance = Instantiate(
+						playerPrefab,			 // object
+						new Vector3(col, row, 0),	 // pos
+						Quaternion.identity		 // rotate
+					);
+				}
 			}
 			// 改行
 			debugText += "\n";
