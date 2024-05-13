@@ -8,9 +8,9 @@ public class NewBehaviourScript : MonoBehaviour {
 	// GemeObjectの追加
 	public GameObject playerPrefab;
 	public GameObject boxPrefab;
+	public GameObject particlePrefab;
 
-
-	// prefubではない
+	// prefabではない
 	public GameObject clearText;
 	public GameObject goalsObj;
 
@@ -18,9 +18,11 @@ public class NewBehaviourScript : MonoBehaviour {
 	int[,] map;
 	GameObject[,] field;// ゲーム管理用の配列
 
-
 	// Start is called before the first frame update
 	void Start() {
+
+		// フルスクリーンにする
+		Screen.SetResolution(1280, 720, true);
 
 		//GameObject instance = Instantiate(
 		//	playerPrefab,			 // object
@@ -54,7 +56,7 @@ public class NewBehaviourScript : MonoBehaviour {
 						playerPrefab,            // object
 						new Vector3(col - map.GetLength(1) / 2, map.GetLength(0) / 2 - row , 0),     // pos(カメラの中心に来るような処理をしている)
 						//new Vector3(col, map.GetLength(0) -row , 0),     // pos
-						Quaternion.identity      // rotate
+						Quaternion.LookRotation(new Vector3(0.0f,1.0f,0.0f))      // rotate
 					);
 				}else if(map[row, col] == 2) {
 					field[row, col] = Instantiate(
@@ -92,7 +94,7 @@ public class NewBehaviourScript : MonoBehaviour {
 			MoveNumber("Player", playerIndex, playerIndexPlus);
 
 			// クリア判定
-			if (IsCleard()) {
+			if (IsCleared()) {
 				clearText.SetActive(true);
 			}
 		}
@@ -108,7 +110,7 @@ public class NewBehaviourScript : MonoBehaviour {
 			MoveNumber("Player", playerIndex, playerIndexPlus);
 
 			// クリア判定
-			if (IsCleard()) {
+			if (IsCleared()) {
 				clearText.SetActive(true);
 			}
 		}
@@ -123,7 +125,7 @@ public class NewBehaviourScript : MonoBehaviour {
 			// 移動処理
 			MoveNumber("Player", playerIndex, playerIndexPlus);
 
-			if (IsCleard()) {
+			if (IsCleared()) {
 				clearText.SetActive(true);
 			}
 		}
@@ -139,7 +141,7 @@ public class NewBehaviourScript : MonoBehaviour {
 			MoveNumber("Player", playerIndex, playerIndexPlus);
 
 			// クリア判定
-			if (IsCleard()) {
+			if (IsCleared()) {
 				clearText.SetActive(true);
 			}
 		}
@@ -194,7 +196,13 @@ public class NewBehaviourScript : MonoBehaviour {
 		}
 
 		// moveFromにあるゲームオブジェクトに座標を操作する
-		field[moveFrom.y, moveFrom.x].transform.position = new Vector3(moveTo.x - map.GetLength(1) / 2, map.GetLength(0) - moveTo.y , 0);
+		//field[moveFrom.y, moveFrom.x].transform.position = new Vector3(moveTo.x - map.GetLength(1) / 2, map.GetLength(0) - moveTo.y , 0);
+		//field[moveFrom.y, moveFrom.x].transform.position = new Vector3(moveTo.x - map.GetLength(1) / 2, map.GetLength(0) / 2 - moveTo.y, 0);
+
+		Vector3 moveToPosition = new Vector3(moveTo.x - map.GetLength(1) / 2, -moveTo.y + map.GetLength(0) / 2, 0);
+		field[moveFrom.y, moveFrom.x].GetComponent<Move>().MoveTo(moveToPosition);
+		// particleの生成
+		//CreateParticle(moveToPosition);
 
 		// 変わらない処理(移動して箱があったら再帰内で移動)
 		field[moveTo.y, moveTo.x] = field[moveFrom.y, moveFrom.x];
@@ -206,7 +214,7 @@ public class NewBehaviourScript : MonoBehaviour {
 	//=================================================================================================================
 	//	↓　ゴール判定
 	//=================================================================================================================
-	bool IsCleard() {
+	bool IsCleared() {
 		List<Vector2Int> goals = new List<Vector2Int>();
 
 		// mapから3(ゴールの位置)を抽出する
@@ -231,4 +239,16 @@ public class NewBehaviourScript : MonoBehaviour {
 		return true;
 	}
 
+	//=================================================================================================================
+	//	↓　particleの生成
+	//=================================================================================================================
+	void CreateParticle(Vector3 position) {
+		for (int oi = 0; oi < 7; oi++) {
+			GameObject instance = Instantiate(
+				particlePrefab,            // object
+				position,				   // pos
+				Quaternion.identity        // rotate
+			);
+		}
+	}
 }
