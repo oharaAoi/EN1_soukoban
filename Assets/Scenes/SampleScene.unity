@@ -579,6 +579,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerPrefab: {fileID: 5461052779654786451, guid: 8f5e135a19626f544908fc8f156144b9, type: 3}
   boxPrefab: {fileID: 5002699710765705104, guid: eee7e8d744a31794db544619ab88559a, type: 3}
+  particlePrefab: {fileID: 6382003552520400135, guid: dea00a6395fda0146aeba9adb04b62a0, type: 3}
+  wallPrefab: {fileID: 5833928554719821263, guid: 696af9888444c694c882716d2d59d6a0, type: 3}
   clearText: {fileID: 1308802798}
   goalsObj: {fileID: 2884493424423074507, guid: 7d7931050c2bc6f45899f7d02f12a90c, type: 3}
 --- !u!4 &1679677183

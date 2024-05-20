@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class NewBehaviourScript : MonoBehaviour {
 
@@ -9,6 +10,7 @@ public class NewBehaviourScript : MonoBehaviour {
 	public GameObject playerPrefab;
 	public GameObject boxPrefab;
 	public GameObject particlePrefab;
+	public GameObject wallPrefab;
 
 	// prefabではない
 	public GameObject clearText;
@@ -32,11 +34,13 @@ public class NewBehaviourScript : MonoBehaviour {
 
 		// 配列の実体と作成を初期化
 		map = new int[,] {
-			{0,0,0,0,0},
-			{0,3,1,3,0},
-			{0,0,2,0,0},
-			{0,2,3,2,0},
-			{0,0,0,0,0},
+			{9,9,9,9,9,9,9},
+			{9,0,0,0,0,0,9},
+			{9,0,3,1,3,0,9},
+			{9,0,0,2,0,0,9},
+			{9,0,2,3,2,0,9},
+			{9,0,0,0,0,0,9},
+			{9,9,9,9,9,9,9},
 		};
 
 		field = new GameObject[
@@ -56,7 +60,7 @@ public class NewBehaviourScript : MonoBehaviour {
 						playerPrefab,            // object
 						new Vector3(col - map.GetLength(1) / 2, map.GetLength(0) / 2 - row , 0),     // pos(カメラの中心に来るような処理をしている)
 						//new Vector3(col, map.GetLength(0) -row , 0),     // pos
-						Quaternion.LookRotation(new Vector3(0.0f,1.0f,0.0f))      // rotate
+						Quaternion.LookRotation(new Vector3(0.0f,-1.0f,0.0f), Vector3.back)      // rotate
 					);
 				}else if(map[row, col] == 2) {
 					field[row, col] = Instantiate(
@@ -69,6 +73,12 @@ public class NewBehaviourScript : MonoBehaviour {
 					GameObject instantiate = Instantiate(
 						goalsObj,
 						new Vector3(col - map.GetLength(1) / 2, map.GetLength(0) / 2 - row, 0.01f),
+						Quaternion.identity
+					);
+				}else if (map[row, col] == 9) {
+					field[row, col] = Instantiate(
+						wallPrefab,
+						new Vector3(col - map.GetLength(1) / 2, map.GetLength(0) / 2 - row, 0),
 						Quaternion.identity
 					);
 				}
@@ -180,6 +190,13 @@ public class NewBehaviourScript : MonoBehaviour {
 			return false; // 動けない
 		}
 
+		// 動く先が壁だったら
+		if (field[moveTo.y, moveTo.x] != null) {
+			if (field[moveTo.y, moveTo.x].tag == "Wall") {
+				return false;
+			}
+		}
+
 		// 移動先に2(箱)があったら
 		if (field[moveTo.y, moveTo.x] != null) {
 			if (field[moveTo.y, moveTo.x].tag == "Box") {
@@ -199,13 +216,15 @@ public class NewBehaviourScript : MonoBehaviour {
 		//field[moveFrom.y, moveFrom.x].transform.position = new Vector3(moveTo.x - map.GetLength(1) / 2, map.GetLength(0) - moveTo.y , 0);
 		//field[moveFrom.y, moveFrom.x].transform.position = new Vector3(moveTo.x - map.GetLength(1) / 2, map.GetLength(0) / 2 - moveTo.y, 0);
 
+		Vector3 moveFromPosition = new Vector3(moveFrom.x - map.GetLength(1) / 2, -moveFrom.y + map.GetLength(0) / 2, 0);
 		Vector3 moveToPosition = new Vector3(moveTo.x - map.GetLength(1) / 2, -moveTo.y + map.GetLength(0) / 2, 0);
 		field[moveFrom.y, moveFrom.x].GetComponent<Move>().MoveTo(moveToPosition);
 		// particleの生成
-		//CreateParticle(moveToPosition);
+		CreateParticle(moveToPosition);
 
 		// 変わらない処理(移動して箱があったら再帰内で移動)
 		field[moveTo.y, moveTo.x] = field[moveFrom.y, moveFrom.x];
+		field[moveTo.y, moveTo.x].transform.rotation = Quaternion.LookRotation(moveToPosition - moveFromPosition, Vector3.back);
 		field[moveFrom.y, moveFrom.x] = null;
 
 		return true;
