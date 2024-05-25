@@ -15,6 +15,7 @@ public class NewBehaviourScript : MonoBehaviour {
 	// prefab‚Å‚Í‚È‚¢
 	public GameObject clearText;
 	public GameObject goalsObj;
+	public FadeSceneLoader fadeSceneLoader;
 
 	// ”z—ñ‚ÌéŒ¾
 	int[,] map;
@@ -155,6 +156,11 @@ public class NewBehaviourScript : MonoBehaviour {
 				clearText.SetActive(true);
 			}
 		}
+
+		if (IsCleared()) {
+			fadeSceneLoader.isClear = true;
+			fadeSceneLoader.CallCoroutine();
+		}
 	}
 
 	//=================================================================================================================
@@ -219,7 +225,7 @@ public class NewBehaviourScript : MonoBehaviour {
 		Vector3 moveFromPosition = new Vector3(moveFrom.x - map.GetLength(1) / 2, -moveFrom.y + map.GetLength(0) / 2, 0);
 		Vector3 moveToPosition = new Vector3(moveTo.x - map.GetLength(1) / 2, -moveTo.y + map.GetLength(0) / 2, 0);
 		field[moveFrom.y, moveFrom.x].GetComponent<Move>().MoveTo(moveToPosition);
-		// particle‚Ì¶¬
+		// particle‚Ì¶¬.
 		CreateParticle(moveToPosition);
 
 		// •Ï‚í‚ç‚È‚¢ˆ—(ˆÚ“®‚µ‚Ä” ‚ª‚ ‚Á‚½‚çÄ‹A“à‚ÅˆÚ“®)
