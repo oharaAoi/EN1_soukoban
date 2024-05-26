@@ -214,6 +214,7 @@ MonoBehaviour:
   fadePanel: {fileID: 348383195}
   fadeDuration: 1
   nextSceneName: SelectScene
+  isClear: 0
 --- !u!1 &912826431
 GameObject:
   m_ObjectHideFlags: 0
@@ -650,6 +651,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nextSceneName: SelectScene
+  nowSceneName: 
   fadeSceneLoader: {fileID: 348383197}
 --- !u!4 &1523844777
 Transform:

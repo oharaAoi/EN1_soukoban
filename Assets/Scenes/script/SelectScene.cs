@@ -7,6 +7,7 @@ public class SelectScene : MonoBehaviour
 {
 	public FadeSceneLoader fadeSceneLoader;
 
+
 	// Start is called before the first frame update
 	void Start()
     {
