@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class StageMap : MonoBehaviour
 {
-	int[,] map;
+	static int[,] map;
 	private List<int[,]> maps = new List<int[,]>();
 
 	int selectedStage = 0;
@@ -13,8 +13,9 @@ public class StageMap : MonoBehaviour
 	public FadeSceneLoader fadeSceneLoader;
 
 	// Start is called before the first frame update
-	void Start()
-    {
+	void Start() {
+		DontDestroyOnLoad(this.gameObject);
+
 		// 複数のマップを初期化
 		maps.Add(new int[,] {
 			{9,9,9,9,9,9,9},
@@ -48,7 +49,7 @@ public class StageMap : MonoBehaviour
 
 		maps.Add(new int[,] {
 			{9,9,9,9,9,9,9},
-			{9,0,0,0,4,0,9},
+			{9,0,0,0,1,0,9},
 			{9,0,3,0,3,0,9},
 			{9,0,0,2,0,0,9},
 			{9,0,2,3,2,0,9},
@@ -61,20 +62,21 @@ public class StageMap : MonoBehaviour
 	}
 
     // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    void Update(){}
 
 	// map を公開するプロパティ
-	public int[,] Map {
+	static public int[,] Map {
 		get { return map; }
 	}
 
+	/// <summary>
+	/// ステージを選択
+	/// </summary>
+	/// <param name="bossID"></param>
 	public void SelectStage(int bossID) {
-		if (bossID > 0 && bossID < maps.Count) {
+		if (bossID > 0 && bossID <= maps.Count) {
 			selectedStage = bossID - 1;
-			map = maps[bossID];
+			map = maps[selectedStage];
 			fadeSceneLoader.CallCoroutine();
 		} else {
 			Debug.LogError("ステージインデックスが範囲外です");

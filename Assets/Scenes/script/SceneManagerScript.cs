@@ -1,27 +1,32 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 public class SceneManagerScript : MonoBehaviour
 {
+    public string nextSceneName;
+    public string nowSceneName;
+	public FadeSceneLoader fadeSceneLoader;
 
+    // sound
+    private AudioSource audioSource;
 
-
-    // Start is called before the first frame update
-    void Start()
+	// Start is called before the first frame update
+	void Start()
     {
-        
-    }
+		
+	}
 
     // Update is called once per frame
     void Update()
     {
-        
-    }
-	public void OnStageSelectButtonPressed(int bossID) {
-		// ÉVÅ[ÉìêÿÇËë÷Ç¶
-		//SceneManager.LoadScene(bossID + 1);
+        if (Input.GetKeyDown(KeyCode.Space)) {
+			fadeSceneLoader.CallCoroutine();
+		}
+
+        if (fadeSceneLoader.isClear) {
+			fadeSceneLoader.CallCoroutine();
+		}
 	}
 }

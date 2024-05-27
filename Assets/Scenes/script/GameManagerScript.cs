@@ -1,11 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class NewBehaviourScript : MonoBehaviour {
+public class GameManagerScript : MonoBehaviour {
 
 	// GemeObjectの追加
 	public GameObject playerPrefab;
@@ -16,29 +17,29 @@ public class NewBehaviourScript : MonoBehaviour {
 	// prefabではない
 	public GameObject clearText;
 	public GameObject goalsObj;
+	public GameObject backGroundObj;
 	public FadeSceneLoader fadeSceneLoader;
-
 	//private StageMap stageMap;
 
-	//private Stack<MoveState> moveStack = new Stack<MoveState>();
 	// 配列の宣言
 	int[,] map;
 	GameObject[,] field;// ゲーム管理用の配列
 
+	// fieldをスタックする変数
 	Stack<GameObjectState[,]> fieldStack = new Stack<GameObjectState[,]>();
+
+	// クリア後にフレームをカウントする変数
+	int clearedFrameCount = 0;
+	// クリアしたかのフラグ
+	bool isClear = false;
 
 	// Start is called before the first frame update
 	void Start() {
-
 		// フルスクリーンにする
 		Screen.SetResolution(1280, 720, true);
 
-		// StageMap コンポーネントへの参照を取得
-		StageMap stageMap = FindObjectOfType<StageMap>();
+		//map = StageMap.Map;
 
-		map = stageMap.Map;
-
-		// 複数のマップを初期化
 		map = (new int[,] {
 			{9,9,9,9,9,9,9},
 			{9,1,0,0,0,0,9},
@@ -48,6 +49,8 @@ public class NewBehaviourScript : MonoBehaviour {
 			{9,0,0,0,0,0,9},
 			{9,9,9,9,9,9,9},
 		});
+
+		//Debug.Assert(map == null, "mapがnullでした");
 
 		field = new GameObject[
 			map.GetLength(0),
@@ -93,8 +96,14 @@ public class NewBehaviourScript : MonoBehaviour {
 			debugText += "\n";
 		}
 
-		Debug.Log(debugText);
+		// backGround
+		GameObject backGroundInstance = Instantiate(
+				backGroundObj,
+				new Vector3(0.0f, 0.0f, 0.5f),
+				Quaternion.identity
+		);
 
+		Debug.Log(debugText);
 	}
 
 	// Update is called once per frame
@@ -115,6 +124,7 @@ public class NewBehaviourScript : MonoBehaviour {
 
 			// クリア判定
 			if (IsCleared()) {
+				isClear = true;
 				clearText.SetActive(true);
 			}
 		}
@@ -134,6 +144,7 @@ public class NewBehaviourScript : MonoBehaviour {
 
 			// クリア判定
 			if (IsCleared()) {
+				isClear = true;
 				clearText.SetActive(true);
 			}
 		}
@@ -152,6 +163,7 @@ public class NewBehaviourScript : MonoBehaviour {
 			MoveNumber("Player", playerIndex, playerIndexPlus);
 
 			if (IsCleared()) {
+				isClear = true;
 				clearText.SetActive(true);
 			}
 		}
@@ -171,68 +183,80 @@ public class NewBehaviourScript : MonoBehaviour {
 
 			// クリア判定
 			if (IsCleared()) {
+				isClear = true;
 				clearText.SetActive(true);
 			}
-		}
-
-		if (IsCleared()) {
-			fadeSceneLoader.isClear = true;
-			fadeSceneLoader.CallCoroutine();
 		}
 
 		// ---------------------------------------------------------------
 		// ↓　Undo
 		// ---------------------------------------------------------------
 		if (Input.GetKeyDown(KeyCode.Z)) {
-			if (fieldStack.Count > 0) {
-				if (field != null) {
-					// field の要素を順番に破棄する
-					foreach (GameObject obj in field) {
-						if (obj != null) {
-							// GameObject を破棄する
-							obj.SetActive(false);
-						}
+			if (fieldStack.Count <= 0) {
+				return;
+			}
+
+			if (field != null) {
+				// field の要素を順番に破棄する
+				foreach (GameObject obj in field) {
+					if (obj != null) {
+						// GameObject を破棄する
+						obj.SetActive(false);
 					}
 				}
+			}
 
-				// fieldStack から配列をポップする
-				GameObjectState[,] tempField = fieldStack.Pop();
+			// fieldStack から配列をポップする
+			GameObjectState[,] tempField = fieldStack.Pop();
 
-				// 新しい配列を作成して元の配列をコピーする
-				field = new GameObject[tempField.GetLength(0), tempField.GetLength(1)];
-				for (int row = 0; row < tempField.GetLength(0); row++) {
-					for (int col = 0; col < tempField.GetLength(1); col++) {
-						if (tempField[row, col] != null) {
-							if (tempField[row, col].tag == "Player") {
-								field[row, col] = Instantiate(
-									playerPrefab,
-									tempField[row, col].position,
-									tempField[row, col].rotation
-								);
-							} else if (tempField[row, col].tag == "Box") {
-								field[row, col] = Instantiate(
-									boxPrefab,
-									tempField[row, col].position,
-									tempField[row, col].rotation
-								);
-							} else if (tempField[row, col].tag == "Goal") {
-								Instantiate(
-									goalsObj,
-									tempField[row, col].position,
-									tempField[row, col].rotation
-								);
-							} else if (tempField[row, col].tag == "Wall") {
-								field[row, col] = Instantiate(
-									wallPrefab,
-									tempField[row, col].position,
-									tempField[row, col].rotation
-								);
-							}
+			// 新しい配列を作成して元の配列をコピーする
+			field = new GameObject[tempField.GetLength(0), tempField.GetLength(1)];
+			for (int row = 0; row < tempField.GetLength(0); row++) {
+				for (int col = 0; col < tempField.GetLength(1); col++) {
+					if (tempField[row, col] != null) {
+						if (tempField[row, col].tag == "Player") {
+							field[row, col] = Instantiate(
+								playerPrefab,
+								tempField[row, col].position,
+								tempField[row, col].rotation
+							);
+						} else if (tempField[row, col].tag == "Box") {
+							field[row, col] = Instantiate(
+								boxPrefab,
+								tempField[row, col].position,
+								tempField[row, col].rotation
+							);
+						} else if (tempField[row, col].tag == "Goal") {
+							Instantiate(
+								goalsObj,
+								tempField[row, col].position,
+								tempField[row, col].rotation
+							);
+						} else if (tempField[row, col].tag == "Wall") {
+							field[row, col] = Instantiate(
+								wallPrefab,
+								tempField[row, col].position,
+								tempField[row, col].rotation
+							);
 						}
 					}
 				}
 			}
+
 		}
+
+		// ---------------------------------------------------------------
+		// ↓　クリア時にシーンを切り変える
+		// ---------------------------------------------------------------
+		if (isClear) {
+			clearedFrameCount++;
+
+			if(clearedFrameCount > 500) {
+				fadeSceneLoader.isClear = true;
+				fadeSceneLoader.CallCoroutine();
+			}
+		}
+
 
 		//=================================================================================================================
 		//	↓　1が入っている要素を返す関数
@@ -311,6 +335,8 @@ public class NewBehaviourScript : MonoBehaviour {
 		//	↓　ゴール判定
 		//=================================================================================================================
 		bool IsCleared() {
+			//Debug.Assert(map == null, "mapがnullでした");
+
 			List<Vector2Int> goals = new List<Vector2Int>();
 
 			// mapから3(ゴールの位置)を抽出する
@@ -398,8 +424,3 @@ public class NewBehaviourScript : MonoBehaviour {
 		}
 	}
 }
-
-//===================================================================================
-// 位置の情報を更新するためのクラス
-//===================================================================================
-
