@@ -12,9 +12,13 @@ public class StageMap : MonoBehaviour
 
 	public FadeSceneLoader fadeSceneLoader;
 
+	private MainSound mainSound;
+
 	// Start is called before the first frame update
 	void Start() {
 		DontDestroyOnLoad(this.gameObject);
+
+		mainSound = FindObjectOfType<MainSound>();
 
 		// 複数のマップを初期化
 		maps.Add(new int[,] {
@@ -77,7 +81,11 @@ public class StageMap : MonoBehaviour
 		if (bossID > 0 && bossID <= maps.Count) {
 			selectedStage = bossID - 1;
 			map = maps[selectedStage];
+			// シーン切り替え
 			fadeSceneLoader.CallCoroutine();
+			// 音を止める
+			mainSound.StopSound();
+
 		} else {
 			Debug.LogError("ステージインデックスが範囲外です");
 		}

@@ -21,6 +21,10 @@ public class GameManagerScript : MonoBehaviour {
 	public FadeSceneLoader fadeSceneLoader;
 	//private StageMap stageMap;
 
+	private MainSound mainSound;
+	public AudioSource clearSound;
+	public AudioSource playSound;
+
 	// 配列の宣言
 	int[,] map;
 	GameObject[,] field;// ゲーム管理用の配列
@@ -32,11 +36,17 @@ public class GameManagerScript : MonoBehaviour {
 	int clearedFrameCount = 0;
 	// クリアしたかのフラグ
 	bool isClear = false;
+	// 音が終わったかの判定
+	bool isClearSoundFinish = false;
 
 	// Start is called before the first frame update
 	void Start() {
 		// フルスクリーンにする
 		Screen.SetResolution(1280, 720, true);
+
+		mainSound = FindObjectOfType<MainSound>();
+		// 音を鳴らす
+		playSound.Play();
 
 		//map = StageMap.Map;
 
@@ -249,14 +259,15 @@ public class GameManagerScript : MonoBehaviour {
 		// ↓　クリア時にシーンを切り変える
 		// ---------------------------------------------------------------
 		if (isClear) {
-			clearedFrameCount++;
+			StartCoroutine(CheckClearSoundFinish());
 
-			if(clearedFrameCount > 500) {
+			if (isClearSoundFinish) {
 				fadeSceneLoader.isClear = true;
 				fadeSceneLoader.CallCoroutine();
+
+				mainSound.PlaySound();
 			}
 		}
-
 
 		//=================================================================================================================
 		//	↓　1が入っている要素を返す関数
@@ -357,6 +368,7 @@ public class GameManagerScript : MonoBehaviour {
 				}
 			}
 
+			playSound.Stop();
 			// 
 			return true;
 		}
@@ -390,6 +402,20 @@ public class GameManagerScript : MonoBehaviour {
 			return copy;
 		}
 
+	}
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <returns></returns>
+	public IEnumerator CheckClearSoundFinish() {
+		yield return new WaitWhile(() => clearSound.isPlaying);
+
+		clearedFrameCount++;
+
+		if (clearedFrameCount > 500) {
+			isClearSoundFinish = true;
+		}
 	}
 
 	GameObjectState[,] GetFieldState(GameObject[,] field) {

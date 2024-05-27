@@ -21,6 +21,9 @@ public class SceneManagerScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (nowSceneName == "Select"){
+            return;
+        }
         if (Input.GetKeyDown(KeyCode.Space)) {
 			fadeSceneLoader.CallCoroutine();
 		}
