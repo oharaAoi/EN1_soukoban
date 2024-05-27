@@ -25,7 +25,7 @@ public class NewBehaviourScript : MonoBehaviour {
 	int[,] map;
 	GameObject[,] field;// ゲーム管理用の配列
 
-	private Stack<GameObject[,]> fieldStack = new Stack<GameObject[,]>();
+	Stack<GameObjectState[,]> fieldStack = new Stack<GameObjectState[,]>();
 
 	// Start is called before the first frame update
 	void Start() {
@@ -107,8 +107,8 @@ public class NewBehaviourScript : MonoBehaviour {
 			Vector2Int playerIndex = GetPlayerIndex();
 			Vector2Int playerIndexPlus = new Vector2Int(playerIndex.x + 1, playerIndex.y);
 			// スタックに移動前の情報を格納しておく
-			GameObject[,] fieldCopy = (GameObject[,])field.Clone();
-			fieldStack.Push(fieldCopy);
+			GameObject[,] fieldCopy = DeepCopy(field);
+			fieldStack.Push(GetFieldState(fieldCopy));
 
 			// 移動処理
 			MoveNumber("Player", playerIndex, playerIndexPlus);
@@ -127,7 +127,8 @@ public class NewBehaviourScript : MonoBehaviour {
 			Vector2Int playerIndex = GetPlayerIndex();
 			Vector2Int playerIndexPlus = new Vector2Int(playerIndex.x - 1, playerIndex.y);
 			// スタックに移動前の情報を格納しておく
-			fieldStack.Push(field);
+			GameObject[,] fieldCopy = DeepCopy(field);
+			fieldStack.Push(GetFieldState(fieldCopy));
 			// 移動処理
 			MoveNumber("Player", playerIndex, playerIndexPlus);
 
@@ -145,7 +146,8 @@ public class NewBehaviourScript : MonoBehaviour {
 			Vector2Int playerIndex = GetPlayerIndex();
 			Vector2Int playerIndexPlus = new Vector2Int(playerIndex.x, playerIndex.y - 1);
 			// スタックに移動前の情報を格納しておく
-			fieldStack.Push(field);
+			GameObject[,] fieldCopy = DeepCopy(field);
+			fieldStack.Push(GetFieldState(fieldCopy));
 			// 移動処理
 			MoveNumber("Player", playerIndex, playerIndexPlus);
 
@@ -162,7 +164,8 @@ public class NewBehaviourScript : MonoBehaviour {
 			Vector2Int playerIndex = GetPlayerIndex();
 			Vector2Int playerIndexPlus = new Vector2Int(playerIndex.x, playerIndex.y + 1);
 			// スタックに移動前の情報を格納しておく
-			fieldStack.Push(field);
+			GameObject[,] fieldCopy = DeepCopy(field);
+			fieldStack.Push(GetFieldState(fieldCopy));
 			// 移動処理
 			MoveNumber("Player", playerIndex, playerIndexPlus);
 
@@ -187,45 +190,44 @@ public class NewBehaviourScript : MonoBehaviour {
 					foreach (GameObject obj in field) {
 						if (obj != null) {
 							// GameObject を破棄する
-							Destroy(obj);
+							obj.SetActive(false);
 						}
 					}
-
-					// field を null に設定する
-					field = null;
 				}
 
-				field = fieldStack.Pop();
+				// fieldStack から配列をポップする
+				GameObjectState[,] tempField = fieldStack.Pop();
 
-				for (int row = 0; row < field.GetLength(0); row++) {
-					for (int col = 0; col < field.GetLength(1); col++) {
-						// fieldの要素に応じてオブジェクトを生成する
-						if (field[row, col] == null) continue; // もしも要素がnullならば、何もしない
-
-						if (field[row, col].tag == "Player") {
-							field[row, col] = Instantiate(
-								playerPrefab,
-								new Vector3(col - field.GetLength(1) / 2, field.GetLength(0) / 2 - row, 0),
-								Quaternion.LookRotation(new Vector3(0.0f, -1.0f, 0.0f), Vector3.back)
-							);
-						} else if (field[row, col].tag == "Box") {
-							field[row, col] = Instantiate(
-								boxPrefab,
-								new Vector3(col - field.GetLength(1) / 2, field.GetLength(0) / 2 - row, 0),
-								Quaternion.identity
-							);
-						} else if (field[row, col].tag == "Goal") {
-							Instantiate(
-								goalsObj,
-								new Vector3(col - field.GetLength(1) / 2, field.GetLength(0) / 2 - row, 0.01f),
-								Quaternion.identity
-							);
-						} else if (field[row, col].tag == "Wall") {
-							field[row, col] = Instantiate(
-								wallPrefab,
-								new Vector3(col - field.GetLength(1) / 2, field.GetLength(0) / 2 - row, 0),
-								Quaternion.identity
-							);
+				// 新しい配列を作成して元の配列をコピーする
+				field = new GameObject[tempField.GetLength(0), tempField.GetLength(1)];
+				for (int row = 0; row < tempField.GetLength(0); row++) {
+					for (int col = 0; col < tempField.GetLength(1); col++) {
+						if (tempField[row, col] != null) {
+							if (tempField[row, col].tag == "Player") {
+								field[row, col] = Instantiate(
+									playerPrefab,
+									tempField[row, col].position,
+									tempField[row, col].rotation
+								);
+							} else if (tempField[row, col].tag == "Box") {
+								field[row, col] = Instantiate(
+									boxPrefab,
+									tempField[row, col].position,
+									tempField[row, col].rotation
+								);
+							} else if (tempField[row, col].tag == "Goal") {
+								Instantiate(
+									goalsObj,
+									tempField[row, col].position,
+									tempField[row, col].rotation
+								);
+							} else if (tempField[row, col].tag == "Wall") {
+								field[row, col] = Instantiate(
+									wallPrefab,
+									tempField[row, col].position,
+									tempField[row, col].rotation
+								);
+							}
 						}
 					}
 				}
@@ -349,41 +351,55 @@ public class NewBehaviourScript : MonoBehaviour {
 		//=================================================================================================================
 		//	↓　Fieldをコピーする
 		//=================================================================================================================
-		GameObject[,] CopyField(GameObject[,] original) {
+		GameObject[,] DeepCopy(GameObject[,] original) {
 			int rows = original.GetLength(0);
 			int cols = original.GetLength(1);
 			GameObject[,] copy = new GameObject[rows, cols];
 
-			for (int i = 0; i < rows; i++) {
-				for (int j = 0; j < cols; j++) {
-					if (original[i, j] != null) {
-						GameObject instance = Instantiate(original[i, j]);
-						instance.SetActive(false);  // 非アクティブにする
-						copy[i, j] = instance;
-					} else {
-						copy[i, j] = null;
-					}
+			for (int row = 0; row < rows; row++) {
+				for (int col = 0; col < cols; col++) {
+					copy[row, col] = original[row, col]; // 深いコピーの場合、Instantiateなどの方法が必要
 				}
 			}
 			return copy;
 		}
 
 	}
+
+	GameObjectState[,] GetFieldState(GameObject[,] field) {
+		int rows = field.GetLength(0);
+		int cols = field.GetLength(1);
+		GameObjectState[,] state = new GameObjectState[rows, cols];
+
+		for (int row = 0; row < rows; row++) {
+			for (int col = 0; col < cols; col++) {
+				if (field[row, col] != null) {
+					state[row, col] = new GameObjectState(
+						field[row, col].tag,
+						field[row, col].transform.position,
+						field[row, col].transform.rotation
+					);
+				}
+			}
+		}
+		return state;
+	}
+
+	[System.Serializable]
+	public class GameObjectState {
+		public string tag;
+		public Vector3 position;
+		public Quaternion rotation;
+
+		public GameObjectState(string tag, Vector3 position, Quaternion rotation) {
+			this.tag = tag;
+			this.position = position;
+			this.rotation = rotation;
+		}
+	}
 }
 
 //===================================================================================
 // 位置の情報を更新するためのクラス
 //===================================================================================
-//public class MoveState {
-//	public Vector2Int oldPlayerPos;
-//	public Vector2Int newPlayerPos;
-//	public List<Vector2Int> oldBoxPos;
-//	public List<Vector2Int> newBoxPos;
 
-//	public MoveState(Vector2Int oldPlayerPos, Vector2Int newPlayerPos, List<Vector2Int> oldBoxPos, List<Vector2Int> newBoxPos) {
-//		this.oldPlayerPos = oldPlayerPos;
-//		this.newPlayerPos = newPlayerPos;
-//		this.oldBoxPos = oldBoxPos;
-//		this.newBoxPos = newBoxPos;
-//	}
-//};
